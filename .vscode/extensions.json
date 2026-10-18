@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "oxc.oxc-vscode",
+    "oven.bun-vscode",
+    "mikestead.dotenv",
+    "github.vscode-github-actions",
+    "yoavbls.pretty-ts-errors",
+    "ms-vscode.vscode-typescript-next"
+  ]
+}

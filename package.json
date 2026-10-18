@@ -1,0 +1,66 @@
+{
+  "name": "@zenthor-hub/vanta-cli",
+  "version": "0.1.1",
+  "description": "Unofficial agent-safe CLI for Vanta Manage API compliance workflows. Not affiliated with Vanta.",
+  "keywords": [
+    "agents",
+    "cli",
+    "compliance",
+    "vanta"
+  ],
+  "homepage": "https://github.com/zenthor-hub/vanta-cli#readme",
+  "bugs": {
+    "url": "https://github.com/zenthor-hub/vanta-cli/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenthor-hub/vanta-cli.git"
+  },
+  "bin": {
+    "vanta": "./src/vanta.ts",
+    "vanta-dev": "./src/vanta.ts"
+  },
+  "files": [
+    "src",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "AGENTS.md",
+    ".agents/skills/vanta"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "vanta": "bun run src/vanta.ts",
+    "oxlint:check": "oxlint --max-warnings=0 . --ignore-path .oxlintignore",
+    "oxlint:fix": "oxlint --fix . --ignore-path .oxlintignore",
+    "oxfmt:check": "oxfmt --check . --ignore-path .oxfmtignore",
+    "oxfmt:fix": "oxfmt --write . --ignore-path .oxfmtignore",
+    "schema:check": "bun scripts/validate-api-paths.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "verify": "bun run oxlint:check && bun run typecheck && bun run oxfmt:check && bun test && bun run skills:check && bun run schema:check && bun run package:check",
+    "schema:coverage": "bun scripts/validate-api-paths.ts --coverage",
+    "schema:refresh": "bun scripts/validate-api-paths.ts --refresh",
+    "skills:check": "bun scripts/validate-skills.ts",
+    "package:check": "bun scripts/check-package.ts",
+    "test:live": "VANTA_LIVE_TESTS=1 bun test"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "@types/node": "^26.6.1",
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.4.2"
+  }
+}
