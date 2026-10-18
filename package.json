@@ -18,8 +18,7 @@
     "url": "git+https://github.com/zenthor-hub/vanta-cli.git"
   },
   "bin": {
-    "vanta": "./src/vanta.ts",
-    "vanta-dev": "./src/vanta.ts"
+    "vanta": "./src/vanta.ts"
   },
   "files": [
     "src",

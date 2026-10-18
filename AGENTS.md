@@ -1,6 +1,6 @@
 # vanta-cli Agent Guide
 
-Prefer the **globally installed** `vanta` binary on PATH. For the local checkout, `vanta-dev` is an optional alias to the same entrypoint (`bun link` or symlink under `~/.bun/bin`) when a released `vanta` is already installed. Inside this repository on unreleased code you may also use `bun run src/vanta.ts …` or `bun run vanta …`.
+Prefer the **globally installed** `vanta` binary on PATH. For the local checkout, `vanta-dev` is an optional symlink under `~/.bun/bin` to the same entrypoint when a released `vanta` is already installed. Inside this repository on unreleased code you may also use `bun run src/vanta.ts …` or `bun run vanta …`.
 
 ## Default Commands
 

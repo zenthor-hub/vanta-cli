@@ -33,8 +33,6 @@ ln -sfn "$(pwd)/src/vanta.ts" ~/.bun/bin/vanta-dev
 vanta-dev doctor --json
 ```
 
-`package.json` declares both `vanta` and `vanta-dev` (same entrypoint), so `bun link` exposes both names on PATH.
-
 For local unreleased development without a global bin:
 
 ```bash

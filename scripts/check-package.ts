@@ -36,8 +36,12 @@ async function run(
 
 try {
   const expected = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
-  const archive = path.join(scratch, "vanta-cli.tgz");
-  await run([process.execPath, "pm", "pack", "--ignore-scripts", "--filename", archive], root);
+  // An optional tarball argument smoke-tests that exact artifact (the publish workflow passes it).
+  const prebuilt = process.argv[2];
+  const archive = prebuilt ? path.resolve(prebuilt) : path.join(scratch, "vanta-cli.tgz");
+  if (!prebuilt) {
+    await run([process.execPath, "pm", "pack", "--ignore-scripts", "--filename", archive], root);
+  }
   await writeFile(
     path.join(scratch, "package.json"),
     JSON.stringify({ private: true, dependencies: { [expected.name]: `file:${archive}` } }),
