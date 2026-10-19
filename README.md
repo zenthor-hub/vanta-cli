@@ -6,7 +6,7 @@ Agent-safe CLI for Vanta Manage API workflows.
 
 ## Install
 
-Requires Bun 1.4.2 or newer. CI uses Bun 1.4.2.
+Bun >= 1.4.2 is required. CI pins Bun 1.4.2.
 
 ```bash
 bun install -g @zenthor-hub/vanta-cli
@@ -300,3 +300,9 @@ Mutations above are dry-runs. After reviewing the target and planned request, us
 `--apply` to execute. Uploading evidence does not submit it; submission is separate.
 Issues and policies also support `get <id>`. Coverage output distinguishes curated
 commands, Manage JSON operations reachable through `raw`, and API/transport gaps.
+
+## Releasing
+
+Bump `package.json` and `CHANGELOG.md` in a pull request. Merge it, then push the tag `vX.Y.Z`.
+
+`.github/workflows/publish.yml` runs on `v*` tags and publishes to npm with provenance via npm trusted publishing.

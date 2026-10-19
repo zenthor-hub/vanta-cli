@@ -1,6 +1,6 @@
 {
   "name": "@zenthor-hub/vanta-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Unofficial agent-safe CLI for Vanta Manage API compliance workflows. Not affiliated with Vanta.",
   "keywords": [
     "agents",
