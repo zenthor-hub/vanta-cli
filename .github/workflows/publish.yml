@@ -79,4 +79,9 @@ jobs:
           path: package
 
       - name: Publish
-        run: npm publish package/vanta-cli.tgz --access public --provenance
+        run: |
+          if [[ ! -f ./package/vanta-cli.tgz ]]; then
+            echo "::error::Publish tarball is missing: ./package/vanta-cli.tgz"
+            exit 1
+          fi
+          npm publish ./package/vanta-cli.tgz --access public --provenance
