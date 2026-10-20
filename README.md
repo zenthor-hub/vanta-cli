@@ -45,6 +45,7 @@ bun run src/vanta.ts doctor --json
 - [AGENTS.md](AGENTS.md): canonical rules for agents.
 - [.agents/skills/vanta/SKILL.md](.agents/skills/vanta/SKILL.md): multi-agent skill (symlink into user skill dirs).
 - [docs/implementation.md](docs/implementation.md): implementation notes and behavior contracts.
+- [docs/vulnerabilities.md](docs/vulnerabilities.md): vulnerability exceptions, assets, and remediation commands.
 - [.agents/skills/vanta/references/test-descriptions.md](.agents/skills/vanta/references/test-descriptions.md): source-of-truth rules for complete Vanta test descriptions.
 - [docs/skills.md](docs/skills.md): skill ownership, packaging, and validation.
 

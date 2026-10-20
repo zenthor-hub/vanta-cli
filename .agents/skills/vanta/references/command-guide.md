@@ -58,9 +58,19 @@ Profiles live under `~/.config/vanta-cli/profiles/`. Default config prefers `~/.
 ```bash
 vanta vulnerabilities list --query pageSize=20 --json
 vanta vulnerabilities get VULN_ID --json
+vanta vulnerabilities assets list --all --query assetType=SERVER --json
+vanta vulnerabilities assets get ASSET_ID --json
+vanta vulnerabilities remediations list --all --query severity=HIGH --json
+vanta vulnerabilities deactivate VULN_ID --reason "Accepted risk" --reactivate-when-fixable true --json
+vanta vulnerabilities reactivate VULN_ID --json
+vanta vulnerabilities remediations acknowledge-sla-miss REMEDIATION_ID --comment "Dependency release delayed" --json
 ```
 
-Deactivate/reactivate vulnerabilities via `raw` or future typed commands; list/get are the curated read surface.
+Vulnerability mutations are dry-run by default and make no token or API requests until `--apply`. Inspect the target first, then dry-run and obtain approval before applying. Add `--yes` only when skipping confirmation is approved.
+
+Deactivation requires a nonempty reason and explicit `--reactivate-when-fixable true|false`. Optional `--until` accepts a future RFC 3339 date-time. Omitted expiry follows the API contract and does not confirm an indefinite exception. Reactivation returns `noChange` only when the apply-time read explicitly shows active monitoring. Deactivation always sends requested settings because the read metadata omits the reactivation policy.
+
+SLA acknowledgement requires `--comment`. It uses a bounded existence scan at apply time, narrowed with repeatable `--query` filters and `--max-pages` from 1 to 100. Vanta checks SLA eligibility. HTTP 200 per-entry errors still exit nonzero. [Vulnerability command reference](../../../../docs/vulnerabilities.md) describes request and lookup limits.
 
 ## Auditor API reads
 

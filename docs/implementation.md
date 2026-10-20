@@ -82,6 +82,16 @@ Use `tests entities list <testId>` to inspect an entity before changing it. Deac
 
 Vanta accepts both operations asynchronously. Successful calls return a structured `{ accepted: true, pending: true }` result rather than claiming the state has already changed; Vanta can delay the visible change until the next test run. Do not use these commands for vulnerabilities, which have separate Vanta endpoints.
 
+### Vulnerability mutations
+
+`vulnerabilities deactivate`, `reactivate`, and `remediations acknowledge-sla-miss` send one update in the API's `updates` array. Apply-time reads verify the target before confirmation. Dry-runs perform neither target reads nor token requests.
+
+Each mutation requires exactly one result with the requested ID. Malformed results and per-entry `ERROR` responses exit nonzero, including errors inside HTTP 200 responses. Arbitrary server messages are redacted. Integration-resource batch behavior is unchanged.
+
+Deactivation requires an explicit reactivation policy and accepts a future expiry. Reactivation skips an explicitly active target. Deactivation never skips an update because the read response cannot prove the requested reactivation policy already matches. Successful responses describe acceptance without claiming an immediate state change.
+
+Assets and remediations have bounded collection reads. SLA acknowledgement performs a filter-narrowed bounded lookup that stops at the matching ID. A scan-limit failure differs from a complete filtered scan without a match. The documented remediation fields establish existence, not SLA eligibility. See the [vulnerability command reference](vulnerabilities.md).
+
 ## Output and Error Conventions
 
 Use `--json` for machine-readable output. Successful JSON is written as one complete stdout document, including through Unix pipes. JSON errors use a redacted machine-readable envelope on stderr. Human output is intended for direct inspection and should not be parsed by another tool.
