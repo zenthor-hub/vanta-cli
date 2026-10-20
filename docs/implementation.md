@@ -92,6 +92,12 @@ Deactivation requires an explicit reactivation policy and accepts a future expir
 
 Assets and remediations have bounded collection reads. SLA acknowledgement performs a filter-narrowed bounded lookup that stops at the matching ID. A scan-limit failure differs from a complete filtered scan without a match. The documented remediation fields establish existence, not SLA eligibility. See the [vulnerability command reference](vulnerabilities.md).
 
+### Personnel mutations
+
+`personnel update` supports paired first and last names and employment start date. `set-leave` requires a start date and either an end date or explicit `--indefinite`. `clear-leave` sends no body and makes the person active in personnel-related tests.
+
+All four personnel mutations dry-run offline and repeat a target read before applying. Offboarding also reads the acknowledger, exposes employment and custom-task observations, and blocks visible prerequisite failures. Person does not expose complete monitored-account eligibility. Vanta checks remaining prerequisites. The command reuses the exact single-target bulk-result parser and does not infer success from HTTP 200. See the [personnel command reference](personnel.md).
+
 ## Output and Error Conventions
 
 Use `--json` for machine-readable output. Successful JSON is written as one complete stdout document, including through Unix pipes. JSON errors use a redacted machine-readable envelope on stderr. Human output is intended for direct inspection and should not be parsed by another tool.

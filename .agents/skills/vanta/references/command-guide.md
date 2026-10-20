@@ -378,6 +378,21 @@ vanta --apply tests entities reactivate \
 
 Vanta accepts these operations asynchronously; inspect the entity again after the next test run. Vulnerabilities require Vanta's separate vulnerability endpoints.
 
+## Personnel changes
+
+```bash
+vanta personnel update PERSON_ID --first-name "Example" --last-name "Person" --json
+vanta personnel update PERSON_ID --employment-start-date 2026-01-01T00:00:00Z --json
+vanta personnel set-leave PERSON_ID --start-date 2026-11-01T00:00:00Z --indefinite --json
+vanta personnel set-leave PERSON_ID --start-date 2026-11-01T00:00:00Z --end-date 2026-12-01T00:00:00Z --json
+vanta personnel clear-leave PERSON_ID --json
+vanta personnel offboard PERSON_ID --acknowledger-id ACKNOWLEDGER_PERSON_ID --json
+```
+
+Names require a first and last name together. All dates require RFC 3339 seconds and a timezone. Leave requires exactly one of an end date or `--indefinite`; only the latter sends null. Clear-leave sends no body and makes the person active in personnel-related tests.
+
+Dry-runs make no token or API requests. After explicit approval, rerun the planned command with `--apply`. Offboarding reads both people, displays apply-time employment and custom offboarding task state, and blocks visible incomplete prerequisites. Vanta checks remaining eligibility because Person does not expose all monitored accounts. Completion marks unmonitored accounts deactivated without disconnecting external accounts. A per-entry error exits nonzero even after HTTP 200. No post-write state is claimed.
+
 ## Test Description Sources
 
 When preparing Linear tickets or remediation summaries:

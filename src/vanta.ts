@@ -11,6 +11,7 @@ import { registerDashboardCommands } from "./commands/dashboard.ts";
 import { registerDoctorCommand } from "./commands/doctor.ts";
 import { registerRawCommand } from "./commands/raw.ts";
 import { registerVulnerabilityCommands } from "./commands/vulnerabilities.ts";
+import { registerPersonnelCommands } from "./commands/personnel.ts";
 
 import { CliError } from "./errors.ts";
 import {
@@ -73,7 +74,8 @@ registerAuthCommands(program);
 
 const frameworks = resource(program, "frameworks", v1("/frameworks"), "frameworkId");
 const tests = resource(program, "tests", v1("/tests"), "testId");
-resource(program, "personnel", v1("/people"), "personId");
+const personnel = resource(program, "personnel", v1("/people"), "personId");
+registerPersonnelCommands(personnel);
 const vulnerabilities = resource(
   program,
   "vulnerabilities",
