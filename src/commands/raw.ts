@@ -4,6 +4,7 @@ import { globalsFrom, run, runLocal } from "../cli-run.ts";
 import { CliError } from "../errors.ts";
 import { collect, confirmWrite, parseBodyInput, parseQueryOptions } from "../io.ts";
 import { parseMultipart } from "../multipart.ts";
+import { parseMaxPages, requestAllPages } from "../pagination.ts";
 
 type RawOptions = {
   query: string[];
@@ -14,6 +15,8 @@ type RawOptions = {
   fileType: string[];
   output?: string;
   force?: boolean;
+  all?: boolean;
+  maxPages: string;
 };
 
 export function registerRawCommand(program: Command): void {
@@ -35,9 +38,24 @@ export function registerRawCommand(program: Command): void {
     )
     .option("--output <path>", "save exact response bytes to a file (GET only)")
     .option("--force", "atomically replace an existing --output file")
+    .option("--all", "scan GET collections from the optional starting cursor")
+    .option("--max-pages <number>", "maximum pages with --all, from 1 to 100", "100")
     .action(async function (this: Command, method: string, path: string, options: RawOptions) {
       const upperMethod = method.toUpperCase();
       const hasMultipart = options.form.length > 0 || options.file.length > 0;
+      const maxPages = parseMaxPages(options.maxPages);
+      if (options.all && upperMethod !== "GET") throw new CliError("--all requires GET.");
+      if (
+        options.all &&
+        (options.body !== undefined ||
+          options.bodyFile !== undefined ||
+          hasMultipart ||
+          options.fileType.length > 0 ||
+          options.output !== undefined ||
+          options.force)
+      ) {
+        throw new CliError("--all cannot combine with request bodies, multipart, or file output.");
+      }
       if (hasMultipart && (options.body !== undefined || options.bodyFile !== undefined)) {
         throw new CliError("JSON body options cannot combine with multipart fields or files.");
       }
@@ -78,6 +96,7 @@ export function registerRawCommand(program: Command): void {
         return;
       }
       await run(this, async ({ client }) => {
+        if (options.all) return requestAllPages(client, path, query, { maxPages });
         if (isMutation) await confirmWrite(`${upperMethod} ${path}`, globals);
         if (options.output !== undefined)
           return client.download(path, options.output, { force: options.force, query });

@@ -1,5 +1,6 @@
 import { CliError } from "./errors.ts";
 import type { RequestOptions, VantaClient } from "./api.ts";
+import { z } from "zod";
 
 export type PageInfo = {
   hasNextPage: boolean;
@@ -9,6 +10,16 @@ export type PageInfo = {
 export type Page<T> = {
   results: { data: T[]; pageInfo: PageInfo };
 };
+
+const pageEnvelope = z.object({
+  results: z.object({
+    data: z.array(z.unknown()),
+    pageInfo: z.object({
+      hasNextPage: z.boolean(),
+      endCursor: z.string().nullable().optional(),
+    }),
+  }),
+});
 
 export const DEFAULT_REQUEST_ALL_MAX_PAGES = 100;
 
@@ -24,7 +35,9 @@ export async function requestAllPages<T>(
   path: string,
   query: RequestOptions["query"] = {},
   options: { maxPages?: number; pageSize?: number } = {},
-): Promise<Page<T> & { scan: { pagesFetched: number; complete: true } }> {
+): Promise<
+  Page<T> & { scan: { pagesFetched: number; complete: true; startedAtCursor: string | null } }
+> {
   if (Array.isArray(query.pageCursor)) throw new CliError("Use only one pageCursor.");
   const pagination = new PaginationGuard(path, options.maxPages);
   let pageCursor = query.pageCursor;
@@ -36,12 +49,21 @@ export async function requestAllPages<T>(
       path,
       query: { ...query, pageSize: query.pageSize ?? String(options.pageSize ?? 100), pageCursor },
     });
+    if (!pageEnvelope.safeParse(page).success) {
+      throw new CliError(
+        `${path} returned an unsupported pagination response on page ${pagination.pagesFetched()}. Expected results.data and results.pageInfo.`,
+      );
+    }
     data.push(...page.results.data);
     pageCursor = pagination.nextCursor(page.results.pageInfo);
   } while (pageCursor !== undefined);
   return {
     results: { data, pageInfo: { hasNextPage: false } },
-    scan: { pagesFetched: pagination.pagesFetched(), complete: true },
+    scan: {
+      pagesFetched: pagination.pagesFetched(),
+      complete: true,
+      startedAtCursor: query.pageCursor ?? null,
+    },
   };
 }
 
