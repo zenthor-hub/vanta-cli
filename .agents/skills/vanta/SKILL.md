@@ -58,6 +58,8 @@ Secrets for profile add come from `VANTA_CLIENT_SECRET` or stdin (not `--client-
 - Keep credentials and access tokens out of arguments, committed files, Linear tickets, and chat output. Auth output is redacted by default.
 - When the user asks for a Vanta test description, follow [references/test-descriptions.md](references/test-descriptions.md); the public tests API description can be incomplete.
 
+Personnel mutations use `personnel update`, `set-leave`, `clear-leave`, and `offboard`. Names require a pair. Leave requires an end date or explicit `--indefinite`. Offboarding requires `--acknowledger-id` and Vanta validates remaining eligibility after apply-time observations. These commands dry-run without API reads. See [references/command-guide.md](references/command-guide.md).
+
 Use `--all --max-pages 20` for bounded multi-page list reads. A failed scan returns an error rather than incomplete results. HTTP requests time out after 30 seconds; use `--timeout-ms` to override. Under `--json`, downloads require `--output`.
 
 ## Workflow

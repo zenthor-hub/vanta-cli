@@ -74,3 +74,34 @@ test("coverage separates curated endpoints, supported raw transports and Auditor
     "unsupported-transport": 0,
   });
 });
+
+test("personnel workflow coverage includes the four curated mutations", async () => {
+  const { coverageReport, CURATED_OPERATIONS } = await import("../scripts/validate-api-paths.ts");
+  const expected = [
+    ["patch", "/people/{personId}"],
+    ["post", "/people/{personId}/set-leave"],
+    ["post", "/people/{personId}/clear-leave"],
+    ["post", "/people/offboard"],
+  ];
+  for (const [method, path] of expected) {
+    expect(
+      CURATED_OPERATIONS.some(
+        (operation) =>
+          operation.api === "manage" && operation.method === method && operation.path === path,
+      ),
+    ).toBe(true);
+  }
+  expect(
+    coverageReport(
+      {
+        paths: {
+          "/people/{personId}": { patch: {} },
+          "/people/{personId}/set-leave": { post: {} },
+          "/people/{personId}/clear-leave": { post: {} },
+          "/people/offboard": { post: {} },
+        },
+      },
+      "manage",
+    ).counts.curated,
+  ).toBe(4);
+});
