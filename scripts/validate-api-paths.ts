@@ -110,6 +110,19 @@ export const CURATED_OPERATIONS: Contract[] = [
     },
   },
   { api: "manage", method: "post", path: "/tests/{testId}/entities/{entityId}/reactivate" },
+  ...[
+    { path: "/audits", query: [...pagination, "changedSinceDate", "isActiveAudit"] },
+    { path: "/audits/{auditId}" },
+    { path: "/audits/{auditId}/controls", query: [...pagination, "externalIdMatchesAny"] },
+    { path: "/audits/{auditId}/evidence", query: [...pagination, "changedSinceDate"] },
+    { path: "/audits/{auditId}/evidence/{auditEvidenceId}" },
+    { path: "/audits/{auditId}/evidence/{auditEvidenceId}/urls", query: pagination },
+    {
+      path: "/audits/{auditId}/information-requests",
+      query: [...pagination, "changedSinceDate", "segmentIdsMatchesAny"],
+    },
+    { path: "/audits/{auditId}/information-requests/{requestId}" },
+  ].map((entry): Contract => ({ api: "auditor", method: "get", ...entry })),
   {
     api: "auditor",
     method: "get",
@@ -260,7 +273,9 @@ export function coverageReport(spec: Spec, api: Contract["api"]) {
         const coverage = curated
           ? "curated"
           : api === "auditor"
-            ? "unsupported-api"
+            ? method === "get" && Object.keys(content).length === 0 && !binaryResponse
+              ? "raw"
+              : "unsupported-api"
             : needsUnsupportedBody || (binaryResponse && method !== "get")
               ? "unsupported-transport"
               : "raw";

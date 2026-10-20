@@ -62,15 +62,39 @@ vanta vulnerabilities get VULN_ID --json
 
 Deactivate/reactivate vulnerabilities via `raw` or future typed commands; list/get are the curated read surface.
 
-## Auditor API Code Changes
+## Auditor API reads
 
-Code-change data is provided by Vanta's separate Auditor API application. Configure it with a
+Audit data is provided by Vanta's separate Auditor API application. Configure it with a
 least-privilege `auditor-api.audit:read` scope; it uses a distinct token cache from the Manage API:
 
 ```bash
 export VANTA_AUDITOR_CLIENT_ID="..."
 export VANTA_AUDITOR_CLIENT_SECRET="..."
 ```
+
+Read audits and their related records:
+
+```bash
+vanta audits list --query isActiveAudit=true --all --json
+vanta audits get AUDIT_ID --json
+vanta audits controls list AUDIT_ID --all --json
+vanta audits evidence list AUDIT_ID --query changedSinceDate=2026-01-01T00:00:00Z --all --json
+vanta audits evidence get AUDIT_ID EVIDENCE_ID --json
+vanta audits evidence urls AUDIT_ID EVIDENCE_ID --json
+vanta audits information-requests list AUDIT_ID --all --json
+vanta audits information-requests get AUDIT_ID REQUEST_ID --json
+vanta raw GET /v1/audits --api auditor --all --json
+```
+
+Collection reads preserve query filters, order, and deleted rows with a `deletionDate`.
+Use `--all --max-pages 1..100` for bounded scans, with a default of 100 pages.
+Signed evidence URLs are short-lived bearer capabilities. Return them only when requested.
+The CLI does not download them. URL retrieval requires exactly one audit program segment,
+otherwise Vanta returns HTTP 422. Auditor error output omits response bodies.
+
+`raw --api auditor` accepts GET only with no body, multipart, or file output.
+It requires separate Auditor credentials and never falls back to Manage credentials.
+The default raw API remains Manage. Auditor mutations are unsupported.
 
 List code changes associated with an audit:
 
