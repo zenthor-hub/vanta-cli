@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { TokenManager } from "./auth.ts";
 import { VantaClient } from "./api.ts";
 import { loadAuditorConfig, loadConfig, parseTimeoutMs, type VantaConfig } from "./config.ts";
-import { CliError, formatError, formatJsonError } from "./errors.ts";
+import { CliError, VantaApiError, formatError, formatJsonError } from "./errors.ts";
 import { printResult, type GlobalOptions } from "./io.ts";
 
 export type CliContext = {
@@ -72,7 +72,27 @@ export async function runAuditor(
   command: Command,
   operation: (context: CliContext) => Promise<unknown>,
 ): Promise<void> {
-  await runWithLoader(command, loadAuditorConfig, operation, AUDITOR_CREDENTIAL_ERROR);
+  await runWithLoader(
+    command,
+    loadAuditorConfig,
+    async (context) => {
+      try {
+        return await operation(context);
+      } catch (error) {
+        if (error instanceof VantaApiError) {
+          // Auditor error payloads can contain bearer evidence URLs.
+          throw new VantaApiError(
+            error.status,
+            undefined,
+            `Vanta Auditor API request failed with status ${error.status}`,
+            "auditor",
+          );
+        }
+        throw error;
+      }
+    },
+    AUDITOR_CREDENTIAL_ERROR,
+  );
 }
 
 /** Local ops that do not need Vanta API credentials (e.g. profile list/remove). */

@@ -8,7 +8,7 @@ The CLI authenticates with Vanta OAuth client credentials from local config or e
 
 Authentication output is secret-safe by default. `auth status` returns credential/cache metadata without cached token material, and `auth token` returns a redacted token preview unless `--reveal-token` is explicitly passed. The `doctor` command provides read-only diagnostics for config, cache mode, cache usability, and a harmless framework read when credentials are configured.
 
-Convenience commands target Manage API `/v1` endpoints. The `raw` command is the exception: it sends the exact path provided by the caller, so agents must include `/v1` manually.
+Convenience commands target Manage or separately scoped Auditor API `/v1` endpoints. The `raw` command is the exception: it sends the exact path provided by the caller, so agents must include `/v1` manually.
 
 Resource commands cover the common read surfaces:
 
@@ -128,7 +128,7 @@ support `--query`, `--all`, and `--max-pages`. `issues` and `policies` offer `li
 `integrations update-resources <integrationId> <resourceKind>` sets `inScope`, `ownerId`, and/or `description`. Select explicit `--id` values and/or filters (`--region`, `--account`, `--connection-id`, `--display-name` as a regular expression, `--in-scope`). A selector is required. The command reads the resource kind first and refuses the update when Vanta reports the requested field is unsupported. Filter selection re-lists every matching page at dry-run and again at apply time, skips resources that already have the requested values, and sends `PATCH` bodies of at most 50 `updates`. Dry-run performs those reads and does not call the mutating endpoint. `--apply` asks for confirmation unless `--yes` is set; the prompt lists every freshly matched target by display name and id. Per-entry `ERROR` results are returned in the summary and the process exits non-zero.
 
 `bun run schema:coverage` emits JSON covering every published operation, grouped as
-`curated`, `raw`, `unsupported-api` (Auditor credentials/routing), or
+`curated`, `raw`, `unsupported-api` (Auditor mutations or unavailable transports), or
 `unsupported-transport` (request or response transports the CLI cannot represent).
 Manage raw supports JSON, multipart POST/PUT/PATCH, and exact-byte GET output.
 Multipart and file operations include transport metadata in the coverage report. This is an
@@ -178,3 +178,33 @@ when the scan began at the beginning. Completion applies only to the walk from
 that cursor. Extra endpoint metadata such as `totalCount` is not preserved by
 aggregation; single-page responses remain unchanged. Filters and server order
 are preserved. A scan is not a snapshot across concurrent server updates.
+
+## Auditor reads
+
+The `audits` root provides audit list/get, controls list, evidence list/get/urls,
+information-requests list/get, and the existing code-changes list command.
+All commands use `runAuditor` and `loadAuditorConfig`, including per-profile Auditor
+credentials, base URL, scope, and a separate identity-bound token cache.
+Missing Auditor credentials never fall back to Manage credentials.
+
+`raw --api auditor` accepts GET only with an exact `/v1/` path. It rejects methods,
+bodies, multipart fields, and file output before loading config or credentials,
+even with `--apply --yes`. `--api manage` remains the default and retains file
+transfer and mutation behavior. Both APIs reuse the validated bounded scanner.
+Collection reads preserve deleted records, marked by a non-null `deletionDate`.
+Single-page responses retain API metadata. Aggregation drops endpoint metadata
+such as evidence `totalCount` and reports the scan's starting cursor.
+
+Evidence URL retrieval is paginated and requires exactly one audit program
+segment. Vanta returns HTTP 422 for unsupported segment counts. URLs are
+short-lived bearer capabilities. The CLI returns them in the requested output
+without fetching them or writing extra logs. Auditor API errors retain HTTP
+status but omit response bodies, which can contain evidence URLs. Credential
+and scope guidance names the Auditor settings. Manage error output is unchanged.
+
+The cached Auditor inventory contains 38 GET operations. Nine have curated
+commands, 29 are raw-readable, and 19 mutation operations remain unsupported.
+`bun run schema:coverage` regenerates the counts from the selected schemas.
+`test/auditor-reads.test.ts` checks real CLI requests against local HTTP fixtures,
+including encoded IDs, query filters, scans, profile and cache isolation,
+forbidden methods before token requests, error statuses, and signed URL handling.

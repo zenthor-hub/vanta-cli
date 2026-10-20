@@ -85,9 +85,9 @@ vanta auth token --force-refresh
 
 Auth commands redact access tokens by default. Use `auth token --reveal-token` only when you explicitly need the full bearer token.
 
-## Auditor API Code Changes
+## Auditor API reads
 
-The read-only Auditor API command lists code changes associated with a Vanta audit. It requires a
+The read-only Auditor commands list audits, controls, evidence, information requests, and code changes. They require a
 separate Auditor API application and least-privilege `auditor-api.audit:read` credentials:
 
 ```bash
@@ -100,6 +100,28 @@ vanta audits code-changes list audit_123 \
   --repository acme/api \
   --json
 ```
+
+```bash
+vanta audits list --query isActiveAudit=true --all --json
+vanta audits get audit_123 --json
+vanta audits controls list audit_123 --query externalIdMatchesAny=CC1.1 --json
+vanta audits evidence list audit_123 --query changedSinceDate=2026-01-01T00:00:00Z --all --json
+vanta audits evidence get audit_123 evidence_123 --json
+vanta audits evidence urls audit_123 evidence_123 --json
+vanta audits information-requests list audit_123 --all --json
+vanta audits information-requests get audit_123 request_123 --json
+vanta raw GET /v1/audits --api auditor --all --max-pages 20 --json
+```
+
+Collection reads accept repeatable `--query`, `--all`, and `--max-pages 1..100`.
+They retain soft-deleted rows. A non-null `deletionDate` marks a deleted record.
+Evidence URLs are short-lived bearer capabilities. The CLI outputs requested URLs without
+fetching them. Store or share them only as needed. URL retrieval returns HTTP 422 when the audit
+does not have exactly one program segment. Auditor errors omit response bodies to avoid exposing URLs.
+
+`raw --api auditor` accepts GET only, uses separate Auditor credentials and cache, and rejects
+request bodies, multipart, and file output before loading credentials. Missing Auditor credentials
+never fall back to Manage credentials. `raw` defaults to `--api manage`.
 
 Vanta supports search, source, closed-date, and pagination filters. `--repository` is an exact
 local filter that automatically scans all returned pages, bounded to 50 pages by default. Use

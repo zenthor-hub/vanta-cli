@@ -1,12 +1,13 @@
 import { Command } from "commander";
 
-import { globalsFrom, run, runLocal } from "../cli-run.ts";
+import { globalsFrom, run, runAuditor, runLocal } from "../cli-run.ts";
 import { CliError } from "../errors.ts";
 import { collect, confirmWrite, parseBodyInput, parseQueryOptions } from "../io.ts";
 import { parseMultipart } from "../multipart.ts";
 import { parseMaxPages, requestAllPages } from "../pagination.ts";
 
 type RawOptions = {
+  api: string;
   query: string[];
   body?: string;
   bodyFile?: string;
@@ -22,9 +23,10 @@ type RawOptions = {
 export function registerRawCommand(program: Command): void {
   program
     .command("raw")
-    .description("Call an unsupported Manage API endpoint")
+    .description("Call an exact Manage endpoint or read an Auditor endpoint")
     .argument("<method>", "HTTP method")
     .argument("<path>", "exact API path, including /v1")
+    .option("--api <api>", "manage or auditor (Auditor is GET-only)", "manage")
     .option("--query <key=value>", "query parameter, repeatable", collect, [])
     .option("--body <json>", "JSON request body")
     .option("--body-file <path>", "read JSON request body from file")
@@ -42,6 +44,26 @@ export function registerRawCommand(program: Command): void {
     .option("--max-pages <number>", "maximum pages with --all, from 1 to 100", "100")
     .action(async function (this: Command, method: string, path: string, options: RawOptions) {
       const upperMethod = method.toUpperCase();
+      if (!["manage", "auditor"].includes(options.api))
+        throw new CliError("--api must be manage or auditor.");
+      if (options.api === "auditor") {
+        if (upperMethod !== "GET") throw new CliError("Auditor raw supports GET only.");
+        if (!path.startsWith("/v1/"))
+          throw new CliError("Auditor raw requires an exact /v1/ path.");
+        if (
+          options.body !== undefined ||
+          options.bodyFile !== undefined ||
+          options.form.length > 0 ||
+          options.file.length > 0 ||
+          options.fileType.length > 0 ||
+          options.output !== undefined ||
+          options.force
+        ) {
+          throw new CliError(
+            "Auditor raw does not support request bodies, multipart, or file output.",
+          );
+        }
+      }
       const hasMultipart = options.form.length > 0 || options.file.length > 0;
       const maxPages = parseMaxPages(options.maxPages);
       if (options.all && upperMethod !== "GET") throw new CliError("--all requires GET.");
@@ -95,7 +117,8 @@ export function registerRawCommand(program: Command): void {
         }));
         return;
       }
-      await run(this, async ({ client }) => {
+      const runRequest = options.api === "auditor" ? runAuditor : run;
+      await runRequest(this, async ({ client }) => {
         if (options.all) return requestAllPages(client, path, query, { maxPages });
         if (isMutation) await confirmWrite(`${upperMethod} ${path}`, globals);
         if (options.output !== undefined)

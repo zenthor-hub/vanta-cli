@@ -67,5 +67,10 @@ test("coverage separates curated endpoints, supported raw transports and Auditor
     "unsupported-api": 0,
     "unsupported-transport": 0,
   });
-  expect(coverageReport(reportSpec, "auditor").counts["unsupported-api"]).toBe(4);
+  expect(coverageReport(reportSpec, "auditor").counts).toEqual({
+    curated: 0,
+    raw: 1,
+    "unsupported-api": 3,
+    "unsupported-transport": 0,
+  });
 });
