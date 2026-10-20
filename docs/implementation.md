@@ -224,3 +224,27 @@ commands, 29 are raw-readable, and 19 mutation operations remain unsupported.
 `test/auditor-reads.test.ts` checks real CLI requests against local HTTP fixtures,
 including encoded IDs, query filters, scans, profile and cache isolation,
 forbidden methods before token requests, error statuses, and signed URL handling.
+
+## Vendor evidence and review commands
+
+`src/commands/vendors.ts` registers nine evidence/status/assessment/review commands
+on the existing `vendors` resource. Existing JSON create/update commands retain
+their behavior. Collections use existing query and bounded pagination helpers.
+Assessment and review responses must contain the expected `vendorId`; detail
+responses must also match the requested resource ID. Vendor documents do not
+contain parent IDs, so document reads rely on the requested nested API path.
+
+Uploads require a local regular file and a nonempty document type; optional title
+and description remain multipart text. The type is an open API string. Status
+changes use a multipart `status` field without a file and accept only `MANAGED`,
+`ARCHIVED`, and `IN_PROCUREMENT`. All path IDs in these commands are encoded.
+
+Mutation dry-runs validate local input and print plans without loading credentials
+or sending token/API requests. Apply-time vendor reads verify identity; review
+uploads also read the review and verify its ID and `vendorId`. Only already-target
+status changes return `noChange`. Other writes require confirmation. No tenant
+permissions, MIME acceptance, or upload size guarantees are inferred from fixtures.
+
+`test/vendors.test.ts` drives the real CLI against local HTTP fixtures for all nine
+commands, multipart bytes and fields, parent mismatches, missing resources, status
+validation, confirmation, bounded scans, and existing create/update dry-runs.

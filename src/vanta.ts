@@ -12,6 +12,7 @@ import { registerDoctorCommand } from "./commands/doctor.ts";
 import { registerRawCommand } from "./commands/raw.ts";
 import { registerVulnerabilityCommands } from "./commands/vulnerabilities.ts";
 import { registerPersonnelCommands } from "./commands/personnel.ts";
+import { registerVendorEvidenceCommands } from "./commands/vendors.ts";
 
 import { CliError } from "./errors.ts";
 import {
@@ -415,6 +416,7 @@ documents
 
 const vendorsPath = v1("/vendors");
 const vendors = resource(program, "vendors", vendorsPath, "vendorId");
+registerVendorEvidenceCommands(vendors);
 vendors
   .command("create")
   .description("Create a vendor with a JSON body")

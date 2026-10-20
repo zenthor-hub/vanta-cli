@@ -105,3 +105,22 @@ test("personnel workflow coverage includes the four curated mutations", async ()
     ).counts.curated,
   ).toBe(4);
 });
+
+test("vendor evidence and review operations are curated with multipart contracts", async () => {
+  const { CURATED_OPERATIONS, coverageReport } = await import("../scripts/validate-api-paths.ts");
+  const vendorOperations = CURATED_OPERATIONS.filter((operation) =>
+    operation.path.startsWith("/vendors/{vendorId}/"),
+  );
+  expect(vendorOperations).toHaveLength(9);
+  const paths: Record<string, Record<string, unknown>> = {};
+  for (const operation of vendorOperations) {
+    paths[operation.path] = { ...paths[operation.path], [operation.method]: {} };
+  }
+  expect(coverageReport({ paths }, "manage").counts.curated).toBe(9);
+  for (const operation of vendorOperations.filter((operation) => operation.method === "post")) {
+    expect(operation.body?.contentType).toBe("multipart/form-data");
+    expect(operation.body?.supplied).toEqual(
+      operation.path.endsWith("set-status") ? ["status"] : ["file", "type"],
+    );
+  }
+});

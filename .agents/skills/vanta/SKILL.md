@@ -53,6 +53,7 @@ Secrets for profile add come from `VANTA_CLIENT_SECRET` or stdin (not `--client-
 - Read resources before writing. Mutating commands are dry-run by default; `--apply` only after explicit user approval.
 - Prefer `--body-file` for larger JSON mutation bodies.
 - Raw multipart uses `--form key=value` and `--file field=path` for POST, PUT, or PATCH. JSON bodies cannot combine with multipart. Dry-runs send no API or token requests.
+- Use `vendors documents`, `vendors assessments`, `vendors security-reviews`, and `vendors set-status` for evidence and review workflows. Uploads require `--file` and nonempty `--type`; apply-time reads verify vendor/review identity.
 - Use `raw` only as an escape hatch. Pass the exact Manage API path, including `/v1` when required by the endpoint style used in this CLI (`/v1/...`).
 - Update integration resource scope, owner, or description with `integrations update-resources`, not `raw`. Dry-run lists the matches; `--apply` lists again before patching.
 - Keep credentials and access tokens out of arguments, committed files, Linear tickets, and chat output. Auth output is redacted by default.

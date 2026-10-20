@@ -446,3 +446,30 @@ The aggregate contains `results.data`, a final `pageInfo.hasNextPage: false`, an
 aggregates. Single-page reads preserve the original response. Malformed pages,
 missing or repeated cursors and exhausted bounds return an error without partial
 aggregate output.
+
+## Vendor evidence and reviews
+
+```bash
+vanta vendors documents list vendor_123 --all --max-pages 20 --json
+vanta vendors documents upload vendor_123 --file ./output/report.pdf --type SOC2_REPORT --json
+vanta vendors set-status vendor_123 --status MANAGED --json
+vanta vendors assessments list vendor_123 --json
+vanta vendors assessments get vendor_123 assessment_123 --json
+vanta vendors security-reviews list vendor_123 --json
+vanta vendors security-reviews get vendor_123 review_123 --json
+vanta vendors security-reviews documents list vendor_123 review_123 --json
+vanta vendors security-reviews documents upload vendor_123 review_123 \
+  --file ./output/report.pdf --type SOC2_REPORT --json
+```
+
+Use these commands instead of raw for vendor evidence and status workflows.
+Uploads require a regular file and nonempty `--type`, an open Vanta-defined string.
+Optional `--title` and `--description` are supported. Status accepts `MANAGED`,
+`ARCHIVED`, and `IN_PROCUREMENT`.
+
+Dry-runs are offline. Apply only after explicit approval. The CLI then reads the
+vendor; review uploads also read the review and verify its vendor ownership.
+Confirmation is required unless approved `--yes` is supplied. Already-target
+status returns `noChange` without a write. Assessments and reviews verify returned
+parent IDs; document responses have no ownership fields. All collection commands
+accept repeatable `--query` and bounded `--all --max-pages` options.

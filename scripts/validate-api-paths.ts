@@ -134,6 +134,39 @@ export const CURATED_OPERATIONS: Contract[] = [
   { api: "manage", method: "delete", path: "/documents/{documentId}/links/{linkId}" },
   { api: "manage", method: "post", path: "/vendors", body: jsonBody },
   { api: "manage", method: "patch", path: "/vendors/{vendorId}", body: jsonBody },
+  ...[
+    "/vendors/{vendorId}/documents",
+    "/vendors/{vendorId}/assessments",
+    "/vendors/{vendorId}/security-reviews",
+    "/vendors/{vendorId}/security-reviews/{securityReviewId}/documents",
+  ].map((path): Contract => ({ api: "manage", method: "get", path, query: pagination })),
+  ...[
+    "/vendors/{vendorId}/assessments/{assessmentId}",
+    "/vendors/{vendorId}/security-reviews/{securityReviewId}",
+  ].map((path): Contract => ({ api: "manage", method: "get", path })),
+  ...[
+    "/vendors/{vendorId}/documents",
+    "/vendors/{vendorId}/security-reviews/{securityReviewId}/documents",
+  ].map((path): Contract => ({
+    api: "manage",
+    method: "post",
+    path,
+    body: {
+      contentType: "multipart/form-data",
+      fields: { file: "string", type: "string", title: "string", description: "string" },
+      supplied: ["file", "type"],
+    },
+  })),
+  {
+    api: "manage",
+    method: "post",
+    path: "/vendors/{vendorId}/set-status",
+    body: {
+      contentType: "multipart/form-data",
+      fields: { status: "string" },
+      supplied: ["status"],
+    },
+  },
   {
     api: "manage",
     method: "get",
