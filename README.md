@@ -156,6 +156,34 @@ vanta vendors create --body-file ./tmp/vendor.json --json
 The documented `tmp/` and `output/` paths are ignored by Git. Keep compliance evidence and request
 bodies there instead of placing them in tracked source directories.
 
+## Vendor evidence and reviews
+
+```bash
+vanta vendors documents list vendor_123 --all --max-pages 20 --json
+vanta vendors documents upload vendor_123 --file ./output/report.pdf --type SOC2_REPORT --json
+vanta vendors set-status vendor_123 --status MANAGED --json
+vanta vendors assessments list vendor_123 --json
+vanta vendors assessments get vendor_123 assessment_123 --json
+vanta vendors security-reviews list vendor_123 --json
+vanta vendors security-reviews get vendor_123 review_123 --json
+vanta vendors security-reviews documents list vendor_123 review_123 --json
+vanta vendors security-reviews documents upload vendor_123 review_123 \
+  --file ./output/report.pdf --type SOC2_REPORT --title "SOC2 report" --json
+```
+
+Uploads require a file and a nonempty `--type`. Vanta defines the document type
+strings; the CLI does not impose an enum. Optional `--title` and `--description`
+are sent as multipart text. Status accepts `MANAGED`, `ARCHIVED`, or
+`IN_PROCUREMENT`.
+
+Writes produce an offline dry-run first. After explicit approval, rerun with
+`--apply`; confirmation remains required unless `--yes` was approved. At apply
+time, the CLI reads the vendor and, for review uploads, checks the review ID and
+its `vendorId`. An already-target status returns `noChange` without writing.
+Assessment and review reads validate returned ownership. Document responses have
+no parent IDs, so their ownership depends on the nested API path. Lists accept
+`--query` filters and bounded `--all --max-pages` scans.
+
 ## Output Contract
 
 - `--json` writes one complete JSON document to stdout on success, including through Unix pipes. Empty API success bodies become `null`.
