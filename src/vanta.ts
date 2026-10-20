@@ -10,6 +10,7 @@ import { registerAuditCommands } from "./commands/audits.ts";
 import { registerDashboardCommands } from "./commands/dashboard.ts";
 import { registerDoctorCommand } from "./commands/doctor.ts";
 import { registerRawCommand } from "./commands/raw.ts";
+import { registerVulnerabilityCommands } from "./commands/vulnerabilities.ts";
 
 import { CliError } from "./errors.ts";
 import {
@@ -73,7 +74,13 @@ registerAuthCommands(program);
 const frameworks = resource(program, "frameworks", v1("/frameworks"), "frameworkId");
 const tests = resource(program, "tests", v1("/tests"), "testId");
 resource(program, "personnel", v1("/people"), "personId");
-resource(program, "vulnerabilities", v1("/vulnerabilities"), "vulnerabilityId");
+const vulnerabilities = resource(
+  program,
+  "vulnerabilities",
+  v1("/vulnerabilities"),
+  "vulnerabilityId",
+);
+registerVulnerabilityCommands(vulnerabilities);
 
 resource(program, "issues", v1("/issues"), "issueId");
 resource(program, "policies", v1("/policies"), "policyId");
