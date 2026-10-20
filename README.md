@@ -335,3 +335,15 @@ commands, Manage JSON operations reachable through `raw`, and API/transport gaps
 Bump `package.json` and `CHANGELOG.md` in a pull request. Merge it, then push the tag `vX.Y.Z`.
 
 `.github/workflows/publish.yml` runs on `v*` tags and publishes to npm with provenance via npm trusted publishing.
+
+### Raw collection scans
+
+```bash
+vanta raw GET /v1/event-logs --all --max-pages 20 --json
+```
+
+`--all` requires Vanta's `results.data`/`results.pageInfo` collection format and
+cannot combine with bodies or file transfer options. `scan.startedAtCursor`
+records a supplied starting cursor or `null`. Completion means that walk reached
+the end, not that a resumed scan contains earlier rows. Aggregation omits extra
+endpoint metadata such as `totalCount`; single-page reads preserve it.

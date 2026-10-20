@@ -163,3 +163,18 @@ Handled failures remove temporary output; an uncatchable process kill may leave 
 Manage operations requiring multipart or binary output. The schema gate separately
 checks those fixture field contracts without counting them as curated commands.
 Raw does not validate arbitrary requests against OpenAPI at runtime.
+
+## Raw pagination
+
+`raw GET` accepts `--all --max-pages 1..100` for the standard Vanta collection
+format. The default bound is 100 pages. The shared scanner validates each page's
+array data and pagination metadata before consuming it. Errors identify the
+endpoint and page number, and no aggregate success document is emitted when any
+page fails.
+
+Scans return aggregated data, a final `hasNextPage: false`, and
+`scan: { pagesFetched, complete: true, startedAtCursor }`. The cursor is `null`
+when the scan began at the beginning. Completion applies only to the walk from
+that cursor. Extra endpoint metadata such as `totalCount` is not preserved by
+aggregation; single-page responses remain unchanged. Filters and server order
+are preserved. A scan is not a snapshot across concurrent server updates.

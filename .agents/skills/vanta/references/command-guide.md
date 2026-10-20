@@ -378,3 +378,22 @@ Verification requires no Vanta credentials. Live reads run only with `VANTA_LIVE
 Curated collection reads support `--all --max-pages 20`. Single-page output remains the default. Full scans preserve filters and return `results.data` with `scan.pagesFetched` and `scan.complete`. Missing/repeated cursors or exhausted page bounds fail without returning partial results. Auditor scans default to 50 pages; other lists default to 100.
 
 `--timeout-ms 30000` sets the timeout per HTTP request, including token exchange, upload, and download. `--version` prints the installed package version. Help and version output remain text even with `--json`. Empty API success bodies serialize as JSON `null`; JSON downloads require an explicit `--output` file.
+
+### Raw collection scans
+
+Use `raw GET /v1/<collection> --all --max-pages 20 --json` for a bounded scan of a
+Vanta collection. This requires the `results.data` and `results.pageInfo` API
+response format. Request bodies, multipart inputs, file output and other HTTP
+methods cannot combine with `--all`.
+
+The scan preserves query filters, server ordering and an optional starting
+`--query pageCursor=<cursor>`. Its `scan.startedAtCursor` is that cursor or `null`.
+`scan.complete` means the walk from that position reached the end. A resumed
+scan does not represent the rows before its starting cursor. Server changes
+during a scan do not provide snapshot consistency.
+
+The aggregate contains `results.data`, a final `pageInfo.hasNextPage: false`, and
+`scan` metadata. Endpoint-specific metadata such as `totalCount` is omitted from
+aggregates. Single-page reads preserve the original response. Malformed pages,
+missing or repeated cursors and exhausted bounds return an error without partial
+aggregate output.
