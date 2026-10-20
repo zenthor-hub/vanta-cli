@@ -48,10 +48,11 @@ Secrets for profile add come from `VANTA_CLIENT_SECRET` or stdin (not `--client-
 - Prefer `vanta … --json` for any output that will be parsed or copied into another workflow.
 - Start with `vanta doctor --json` when auth, token cache, or API reachability is uncertain.
 - Use `dashboard failing-tests` for the Vanta Tests dashboard. Do not assume `/v1/tests` alone matches the dashboard. `--framework` also includes unmapped automated tests (`frameworkMatch: "none"`); that is not a Vanta framework ID.
-- For downloads, use a new output path or pass `--force` only when replacing that exact local file is intended.
+- For downloads, use a new output path or pass `--force` only when replacing that exact local file is intended. Raw GET supports `--output`; saved output preserves exact bytes and returns metadata under `--json`.
 - Keep currently failing Vanta tickets open. Verify the source in Vanta before closing; absence from one API query is not completion evidence.
 - Read resources before writing. Mutating commands are dry-run by default; `--apply` only after explicit user approval.
 - Prefer `--body-file` for larger JSON mutation bodies.
+- Raw multipart uses `--form key=value` and `--file field=path` for POST, PUT, or PATCH. JSON bodies cannot combine with multipart. Dry-runs send no API or token requests.
 - Use `raw` only as an escape hatch. Pass the exact Manage API path, including `/v1` when required by the endpoint style used in this CLI (`/v1/...`).
 - Update integration resource scope, owner, or description with `integrations update-resources`, not `raw`. Dry-run lists the matches; `--apply` lists again before patching.
 - Keep credentials and access tokens out of arguments, committed files, Linear tickets, and chat output. Auth output is redacted by default.

@@ -1,8 +1,11 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+
+import { checkOutputPath, publishFile } from "./file-output.ts";
+import type { MultipartPart } from "./multipart.ts";
 
 import type { TokenManager } from "./auth.ts";
 import { DEFAULT_TIMEOUT_MS, type VantaConfig } from "./config.ts";
-import { CliError, VantaApiError } from "./errors.ts";
+import { VantaApiError } from "./errors.ts";
 import {
   computeBackoffMs,
   DEFAULT_BACKOFF,
@@ -89,26 +92,47 @@ export class VantaClient {
     return readApiResponse(response);
   }
 
+  public async multipart(options: {
+    method: string;
+    path: string;
+    query?: RequestOptions["query"];
+    parts: MultipartPart[];
+  }): Promise<unknown> {
+    const form = new FormData();
+    for (const part of options.parts) {
+      if (part.kind === "text") form.append(part.name, part.value);
+      else
+        form.append(
+          part.name,
+          new Blob([readFileSync(part.path)], { type: part.contentType }),
+          part.filename,
+        );
+    }
+    const token = await this.tokenManager.getToken();
+    const response = await this.fetchImpl(this.url(options.path, options.query), {
+      signal: AbortSignal.timeout(this.config.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+      method: options.method,
+      headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+      body: form,
+    });
+    return readApiResponse(response);
+  }
+
   public async download(
     path: string,
     outputPath?: string,
-    options: { force?: boolean } = {},
+    options: { force?: boolean; query?: RequestOptions["query"] } = {},
   ): Promise<unknown> {
-    if (outputPath && existsSync(outputPath) && !options.force) {
-      throw new CliError(
-        `Output file already exists: ${outputPath}. Pass --force to overwrite it.`,
-      );
-    }
+    if (outputPath) await checkOutputPath(outputPath, options.force);
     const token = await this.tokenManager.getToken();
-    const response = await this.fetchImpl(this.url(path), {
+    const response = await this.fetchImpl(this.url(path, options.query), {
       signal: AbortSignal.timeout(this.config.timeoutMs ?? DEFAULT_TIMEOUT_MS),
       headers: { authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new VantaApiError(response.status, await readBody(response));
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (outputPath) {
-      writeFileSync(outputPath, bytes);
-      return { outputPath, bytes: bytes.byteLength };
+      return publishFile(outputPath, bytes, options.force);
     }
     return bytes;
   }

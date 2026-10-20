@@ -129,7 +129,37 @@ support `--query`, `--all`, and `--max-pages`. `issues` and `policies` offer `li
 
 `bun run schema:coverage` emits JSON covering every published operation, grouped as
 `curated`, `raw`, `unsupported-api` (Auditor credentials/routing), or
-`unsupported-transport` (non-JSON request bodies or binary responses). This is an
+`unsupported-transport` (request or response transports the CLI cannot represent).
+Manage raw supports JSON, multipart POST/PUT/PATCH, and exact-byte GET output.
+Multipart and file operations include transport metadata in the coverage report. This is an
 endpoint/transport inventory, not a guarantee of account permissions or complete
 optional-field coverage. Add `--refresh` to fetch current specs. Offline overrides
 are the same as `schema:check`.
+
+## Raw multipart and output contract
+
+`raw` retains single-request JSON behavior by default. Multipart fields are typed
+text or file parts. `--form` preserves text literally, including JSON strings and
+`=`. `--file` supplies a regular file, and `--file-type` optionally overrides its
+MIME type. Known extensions include PDF, JSON, text, CSV, common images, and ZIP;
+unknown extensions use `application/octet-stream`.
+
+| Options                 | Compatible methods and options                                   |
+| ----------------------- | ---------------------------------------------------------------- |
+| `--body`, `--body-file` | Mutually exclusive; cannot combine with multipart or output      |
+| `--form`, `--file`      | POST, PUT, PATCH; repeatable with unique field names             |
+| `--file-type`           | Requires a matching `--file`; one MIME override per field        |
+| `--output`              | GET only; preserves exact bytes and returns file metadata        |
+| `--force`               | Requires `--output`; atomically replaces an existing destination |
+
+Multipart mutations never retry automatically. Dry-runs validate file metadata
+but send no API or token requests. File transfer buffers the response in memory;
+there is no streaming, resume, or size guarantee. A completed temporary file in
+the destination directory is published by hard link for atomic no-clobber output,
+or rename for atomic force replacement. Document downloads use the same helper.
+Handled failures remove temporary output; an uncatchable process kill may leave it.
+
+`test/raw-transfer.test.ts` drives the CLI against local fixtures for the eleven
+Manage operations requiring multipart or binary output. The schema gate separately
+checks those fixture field contracts without counting them as curated commands.
+Raw does not validate arbitrary requests against OpenAPI at runtime.

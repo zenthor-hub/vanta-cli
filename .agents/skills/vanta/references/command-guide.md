@@ -224,6 +224,28 @@ For larger bodies, use a local ignored file:
 vanta raw PATCH /v1/vendors/vendor_123 --body-file ./tmp/vendor-update.json --json
 ```
 
+Multipart mutations use repeatable text and file fields. Run the dry-run first:
+
+```bash
+vanta raw POST /v1/vendors/vendor_123/documents --file file=./output/evidence.pdf --form type=SOC2_REPORT --json
+vanta raw POST /v1/vendors/vendor_123/set-status --form status=MANAGED --json
+```
+
+After explicit approval, rerun with `--apply`. Use `--yes` only if prompt bypass
+was also approved. Multipart supports POST, PUT, and PATCH. Do not combine JSON
+body options with multipart. Field names must be unique; empty text values and
+values containing `=` are preserved. `--file-type field=mime` overrides a supplied
+file's inferred MIME type. Unknown extensions use `application/octet-stream`.
+
+Save raw GET bytes with `--output`. JSON output then reports the saved path and
+byte count. Existing destinations are preserved unless `--force` is selected;
+publication is atomic for document and raw downloads. `--force` requires an
+output path, and output cannot combine with a request body.
+
+```bash
+vanta raw GET /v1/trust-centers/acme/resources/resource_123/media --output ./output/resource.bin --json
+```
+
 ## Integration resource metadata
 
 List kinds, then read one kind's counts and capability flags:
