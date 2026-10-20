@@ -9,6 +9,7 @@ import { registerAuthCommands } from "./commands/auth.ts";
 import { registerAuditCommands } from "./commands/audits.ts";
 import { registerDashboardCommands } from "./commands/dashboard.ts";
 import { registerDoctorCommand } from "./commands/doctor.ts";
+import { registerRawCommand } from "./commands/raw.ts";
 
 import { CliError } from "./errors.ts";
 import {
@@ -353,11 +354,12 @@ documents
     options: { output?: string; force?: boolean },
   ) {
     await run(this, ({ client, globals }) => {
+      if (options.force && !options.output) throw new CliError("--force requires --output.");
       if (globals.json && !options.output) {
         throw new CliError("Use --output <path> for downloads with --json.");
       }
       return client.download(
-        `${documentsPath}/${documentId}/uploads/${uploadedFileId}/media`,
+        `${documentsPath}/${encodeURIComponent(documentId)}/uploads/${encodeURIComponent(uploadedFileId)}/media`,
         options.output,
         { force: options.force },
       );
@@ -554,41 +556,7 @@ registerAuditCommands(program);
 
 registerDoctorCommand(program);
 
-program
-  .command("raw")
-  .description("Call an unsupported Manage API endpoint")
-  .argument("<method>", "HTTP method")
-  .argument("<path>", "API path, for example /vendors")
-  .option("--query <key=value>", "query parameter, repeatable", collect, [])
-  .option("--body <json>", "JSON request body")
-  .option("--body-file <path>", "read JSON request body from file")
-  .action(async function (
-    this: Command,
-    method: string,
-    path: string,
-    options: { query: string[]; body?: string; bodyFile?: string },
-  ) {
-    const body = parseBodyInput(options);
-    const upperMethod = method.toUpperCase();
-    const isMutation = !["GET", "HEAD", "OPTIONS"].includes(upperMethod);
-    if (isMutation) {
-      const request = {
-        method: upperMethod,
-        path,
-        query: parseQueryOptions(options.query),
-        body,
-      };
-      await mutate(this, {
-        summary: `${upperMethod} ${path}`,
-        request,
-        operation: (client) => client.request(request),
-      });
-      return;
-    }
-    await run(this, ({ client }) =>
-      client.request({ method: upperMethod, path, query: parseQueryOptions(options.query), body }),
-    );
-  });
+registerRawCommand(program);
 
 function relatedCollection(parent: Command, name: string, idName: string, basePath: string): void {
   parent

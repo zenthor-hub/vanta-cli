@@ -150,7 +150,36 @@ Document downloads refuse to replace an existing output file:
 vanta documents download doc_123 upload_456 --output ./output/evidence.pdf --json
 ```
 
-Pass `--force` only when replacing that exact file is intended.
+Pass `--force` only when replacing that exact file is intended. Document and raw
+file output publish a completed temporary file atomically. Without `--force`,
+a destination created during the transfer is preserved too. Failed transfers
+preserve existing content. Handled failures clean up temporary files; a hard kill
+may leave an unpublished temporary file.
+
+## Raw file transfer
+
+Use the exact Manage API path, including `/v1`. Multipart requests support POST,
+PUT, and PATCH, including text-only forms:
+
+```bash
+vanta raw POST /v1/vendors/vendor_123/documents \
+  --file file=./output/evidence.pdf --form type=SOC2_REPORT --json
+vanta raw POST /v1/vendors/vendor_123/set-status --form status=MANAGED --json
+vanta raw GET /v1/trust-centers/acme/resources/resource_123/media \
+  --output ./output/resource.bin --json
+```
+
+Mutations remain dry-run until `--apply`, with confirmation unless `--yes` is set.
+Dry-runs include file paths, names, MIME types, and sizes without reading file
+contents or requesting a token. Add `--file-type file=application/pdf` to override
+an inferred MIME type. Unknown file extensions use `application/octet-stream`.
+Server acceptance of file types and sizes depends on the endpoint.
+
+JSON bodies and multipart options cannot combine. Multipart names must be unique
+across `--form` and `--file`; values may be empty or contain `=`. MIME overrides
+must name a supplied file. `--output` requires GET and rejects request bodies;
+`--force` requires `--output`. Output preserves response bytes even for JSON or
+text media. With `--json`, the result contains `outputPath` and `bytes`.
 
 ## Vanta Tests Dashboard Mapping
 

@@ -118,6 +118,38 @@ export const CURATED_OPERATIONS: Contract[] = [
   },
 ];
 
+// These contracts describe fixture inputs, not curated command coverage.
+export const RAW_TRANSPORT_FIXTURES: Contract[] = (
+  [
+    ["/contracts", ["file"]],
+    ["/customer-trust/questionnaires/file", ["file", "displayName"]],
+    ["/knowledge-base/resources/documents", ["file", "title"]],
+    ["/knowledge-base/resources/documents/{id}/upload", ["file"]],
+    ["/trust-centers/{slugId}/compliance-frameworks/{frameworkId}/badge", ["file"]],
+    ["/trust-centers/{slugId}/favicon", ["favicon"]],
+    ["/trust-centers/{slugId}/resources", ["file", "title", "isPublic"]],
+    ["/vendors/{vendorId}/documents", ["file", "type"]],
+    ["/vendors/{vendorId}/security-reviews/{securityReviewId}/documents", ["file", "type"]],
+    ["/vendors/{vendorId}/set-status", ["status"]],
+  ] satisfies [string, string[]][]
+).map(([path, fields]): Contract => {
+  return {
+    api: "manage",
+    method: "post",
+    path,
+    body: {
+      contentType: "multipart/form-data",
+      supplied: fields,
+      fields: Object.fromEntries(fields.map((name) => [name, "string"])),
+    },
+  };
+});
+RAW_TRANSPORT_FIXTURES.push({
+  api: "manage",
+  method: "get",
+  path: "/trust-centers/{slugId}/resources/{resourceId}/media",
+});
+
 const objectSchema = z.record(z.string(), z.unknown());
 const specSchema = z.object({ paths: z.record(z.string(), objectSchema) }).passthrough();
 type Spec = z.infer<typeof specSchema>;
@@ -212,8 +244,11 @@ export function coverageReport(spec: Spec, api: Contract["api"]) {
         const content = operation.requestBody
           ? objectSchema.parse(resolveObject(spec, operation.requestBody).content)
           : {};
+        const multipart = "multipart/form-data" in content;
         const needsUnsupportedBody =
-          Object.keys(content).length > 0 && !("application/json" in content);
+          Object.keys(content).length > 0 &&
+          !("application/json" in content) &&
+          !(multipart && ["post", "put", "patch"].includes(method));
         const responses = objectSchema.parse(operation.responses ?? {});
         const binaryResponse = Object.entries(responses).some(([status, response]) => {
           if (!status.startsWith("2")) return false;
@@ -226,10 +261,16 @@ export function coverageReport(spec: Spec, api: Contract["api"]) {
           ? "curated"
           : api === "auditor"
             ? "unsupported-api"
-            : needsUnsupportedBody || binaryResponse
+            : needsUnsupportedBody || (binaryResponse && method !== "get")
               ? "unsupported-transport"
               : "raw";
-        return { method: method.toUpperCase(), path, coverage };
+        return {
+          method: method.toUpperCase(),
+          path,
+          coverage,
+          ...(multipart ? { requestTransport: "multipart" } : {}),
+          ...(binaryResponse ? { responseTransport: "file" } : {}),
+        };
       }),
   );
   return {
@@ -262,7 +303,7 @@ async function main(): Promise<void> {
     return;
   }
   let failures = 0;
-  for (const contract of CURATED_OPERATIONS) {
+  for (const contract of [...CURATED_OPERATIONS, ...RAW_TRANSPORT_FIXTURES]) {
     const label = `${contract.api} ${contract.method.toUpperCase()} ${contract.path}`;
     try {
       validateContract(contract.api === "manage" ? manage : auditor, contract);
@@ -272,7 +313,9 @@ async function main(): Promise<void> {
       console.error(`invalid  ${label}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
-  console.log(`\nChecked ${CURATED_OPERATIONS.length} curated operations; ${failures} invalid.`);
+  console.log(
+    `\nChecked ${CURATED_OPERATIONS.length} curated operations and ${RAW_TRANSPORT_FIXTURES.length} raw transport fixtures; ${failures} invalid.`,
+  );
   if (failures) process.exitCode = 1;
 }
 

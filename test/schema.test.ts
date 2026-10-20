@@ -51,7 +51,7 @@ test("schema check resolves body references and validates methods, queries and f
   );
 });
 
-test("coverage separates curated endpoints, raw JSON, binary transports and Auditor routing", async () => {
+test("coverage separates curated endpoints, supported raw transports and Auditor routing", async () => {
   const { coverageReport } = await import("../scripts/validate-api-paths.ts");
   const reportSpec = {
     paths: {
@@ -63,9 +63,9 @@ test("coverage separates curated endpoints, raw JSON, binary transports and Audi
   };
   expect(coverageReport(reportSpec, "manage").counts).toEqual({
     curated: 1,
-    raw: 1,
+    raw: 3,
     "unsupported-api": 0,
-    "unsupported-transport": 2,
+    "unsupported-transport": 0,
   });
   expect(coverageReport(reportSpec, "auditor").counts["unsupported-api"]).toBe(4);
 });
